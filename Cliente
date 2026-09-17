@@ -1,0 +1,44 @@
+using System;
+using System.Net.Sockets;
+using System.Text;
+
+class Cliente
+{
+    static void Main()
+    {
+        try
+        {
+            TcpClient cliente = new TcpClient("192.168.200.216", 5001); // Cambia la IP por la del servidor
+            NetworkStream stream = cliente.GetStream();
+
+            // Enviar identificador
+            string usuario = "Cliente1"; // Cambia este nombre para cada usuario
+            byte[] datosUsuario = Encoding.UTF8.GetBytes(usuario);
+            stream.Write(datosUsuario, 0, datosUsuario.Length);
+            Console.WriteLine($"Conectado como: {usuario}");
+
+            // Bucle para enviar mensajes
+            while (true)
+            {
+                Console.Write(">> ");
+                string mensaje = Console.ReadLine();
+                if (mensaje.ToLower() == "salir") break;
+
+                byte[] datosMensaje = Encoding.UTF8.GetBytes(mensaje);
+                stream.Write(datosMensaje, 0, datosMensaje.Length);
+
+                // Recibir respuesta
+                byte[] buffer = new byte[1024];
+                int bytesLeidos = stream.Read(buffer, 0, buffer.Length);
+                string respuesta = Encoding.UTF8.GetString(buffer, 0, bytesLeidos);
+                Console.WriteLine("Respuesta del servidor: " + respuesta);
+            }
+
+            cliente.Close();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+    }
+}
