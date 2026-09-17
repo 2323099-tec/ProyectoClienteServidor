@@ -1,0 +1,52 @@
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+
+class Servidor
+{
+    static void Main()
+    {
+        // Crear socket TCP
+        TcpListener servidor = new TcpListener(IPAddress.Any, 5001);
+        servidor.Start();
+        Console.WriteLine("Servidor esperando conexiones en puerto 5000...");
+
+        while (true)
+        {
+            TcpClient cliente = servidor.AcceptTcpClient();
+            NetworkStream stream = cliente.GetStream();
+
+            // Recibir identificador del cliente
+            byte[] buffer = new byte[1024];
+            int bytesLeidos = stream.Read(buffer, 0, buffer.Length);
+            string identificador = Encoding.UTF8.GetString(buffer, 0, bytesLeidos);
+            Console.WriteLine($"Cliente conectado con ID: {identificador}");
+
+            // Bucle para recibir mensajes
+            while (true)
+            {
+                try
+                {
+                    bytesLeidos = stream.Read(buffer, 0, buffer.Length);
+                    if (bytesLeidos == 0) break; // Cliente cerró conexión
+
+                    string mensaje = Encoding.UTF8.GetString(buffer, 0, bytesLeidos);
+                    Console.WriteLine($"[{identificador}] dice: {mensaje}");
+
+                    // Responder al cliente
+                    string respuesta = $"Servidor recibió tu mensaje, {identificador}";
+                    byte[] datosRespuesta = Encoding.UTF8.GetBytes(respuesta);
+                    stream.Write(datosRespuesta, 0, datosRespuesta.Length);
+                }
+                catch
+                {
+                    break;
+                }
+            }
+
+            cliente.Close();
+            Console.WriteLine($"Cliente {identificador} desconectado.");
+        }
+    }
+}
